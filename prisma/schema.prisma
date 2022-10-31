@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Entry {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  fcp   Float?
+  lcp   Float?
+  ttfb  Float?
+  cls   Float?
+  score Float
+
+  page   Page   @relation(fields: [pageId], references: [id])
+  pageId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Page {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  url      String @unique
+  category String
+
+  history Entry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
