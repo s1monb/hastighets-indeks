@@ -78,7 +78,9 @@ export default function Home() {
                     onChange={(e) => setSelectedCategory(e.target.value)}
                   >
                     {categories.map((c) => (
-                      <option value={c.name}>{c.name}</option>
+                      <option key={c.name} value={c.name}>
+                        {c.name}
+                      </option>
                     ))}
                   </select>
                 </div>

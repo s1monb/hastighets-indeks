@@ -2,7 +2,7 @@ import { router, publicProcedure } from "../trpc";
 
 export const pageRouter = router({
   getAll: publicProcedure.query(async ({ ctx }) => {
-    let pages = await ctx.prisma.page.findMany({
+    const pages = await ctx.prisma.page.findMany({
       orderBy: { score: "desc" },
       include: { history: { orderBy: { score: "desc" } } },
     });

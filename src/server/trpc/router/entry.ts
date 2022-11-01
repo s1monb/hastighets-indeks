@@ -18,7 +18,7 @@ export const entryRouter = router({
       })
     )
     .mutation(async ({ ctx, input: { url, category } }) => {
-      let data = await (
+      const data = await (
         await fetch(
           `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&category=performance&strategy=mobile&key=${process.env.PAGESPEED_API_KEY}`
         )
@@ -34,7 +34,7 @@ export const entryRouter = router({
         data.lighthouseResult.categories["performance"].score &&
         data.lighthouseResult.audits.metrics.details.items[0]
       ) {
-        let metrics = data.lighthouseResult.audits.metrics.details.items[0];
+        const metrics = data.lighthouseResult.audits.metrics.details.items[0];
 
         const entry: Omit<Omit<Prisma.EntryCreateInput, "page">, "score"> = {
           fid: metrics["maxPotentialFID"],
@@ -45,7 +45,8 @@ export const entryRouter = router({
           speed: metrics["speedIndex"],
         };
 
-        let score = data.lighthouseResult.categories["performance"].score * 100;
+        const score =
+          data.lighthouseResult.categories["performance"].score * 100;
 
         const page = await ctx.prisma.page.upsert({
           where: { url },
