@@ -13,9 +13,11 @@ datasource db {
 model Entry {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
   fcp   Float?
+  fid   Float?
   lcp   Float?
   ttfb  Float?
   cls   Float?
+  speed Float?
   score Float
 
   page   Page   @relation(fields: [pageId], references: [id])
@@ -29,6 +31,7 @@ model Page {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
   url      String @unique
   category String
+  score    Float
 
   history Entry[]
 

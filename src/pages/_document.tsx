@@ -5,6 +5,7 @@ import Document, {
   NextScript,
   DocumentContext,
 } from "next/document";
+import ReactTooltip from "react-tooltip";
 
 class MyDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
@@ -30,6 +31,7 @@ class MyDocument extends Document {
       <Html className="h-full bg-gray-100">
         <Head />
         <body className="h-full">
+          <ReactTooltip />
           <Main />
           <NextScript />
         </body>
