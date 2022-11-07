@@ -1,5 +1,6 @@
 - [x] Få tall fra insight
 - [x] Lage modal for å legge inn nettsted
+- [x] Bytte plass på legg til ny og søkefelt
 - [] Få opp resultat ifht bransje
 - [x] Få noe indikasjon på hva som er bra og dårlig basert på farge
 - [x] Medaljer for top 3

@@ -1,10 +1,8 @@
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { Page } from "@prisma/client";
 import clsx from "clsx";
-import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import Search from "../components/Search";
 import Table from "../components/Table";
 
 import { trpc } from "../utils/trpc";
@@ -12,29 +10,42 @@ import { trpc } from "../utils/trpc";
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("Netthandel");
   const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [addedSite, setAddedSite] = useState<Page>();
 
-  const pages = trpc.page.getAll.useQuery();
+  const pages = trpc.page.getAll.useQuery(undefined, {
+    cacheTime: 1000 * 60 * 60 * 24,
+    placeholderData: [],
+    keepPreviousData: true,
+  });
   const create = trpc.entry.add.useMutation();
 
   const categories = [
-    { name: "Netthandel" },
-    { name: "Nettavis" },
-    { name: "Hjemmeside" },
+    "Netthandel",
+    "Nettavis",
+    "Resturanter",
+    "Byrå",
+    "Hjemmeside",
   ];
 
   const createNewEntry = (
     url: string,
-    category: "Netthandel" | "Nettavis" | "Hjemmeside"
+    category: "Netthandel" | "Nettavis" | "Byrå" | "Resturanter" | "Hjemmeside"
   ) => {
     create.mutate(
       { url, category },
       {
-        onSuccess: () => {
+        onSuccess: (page) => {
           pages.refetch();
+          setAddedSite(page);
         },
       }
     );
   };
+
+  useEffect(() => {
+    console.log(addedSite);
+  }, [addedSite]);
 
   return (
     <div className="min-h-full">
@@ -50,23 +61,18 @@ export default function Home() {
                 <div className="hidden gap-4 md:flex">
                   {categories.map((c, i) => (
                     <button
-                      key={c.name}
+                      key={c}
                       className={clsx(
-                        c.name === selectedCategory &&
-                          !search &&
-                          "bg-indigo-500",
+                        c === selectedCategory && !search && "bg-indigo-500",
                         "group rounded px-2 py-1 text-white transition-all hover:bg-indigo-500 hover:shadow"
                       )}
-                      onClick={() => setSelectedCategory(c.name)}
+                      onClick={() => {
+                        setSelectedCategory(c);
+                      }}
                     >
-                      {c.name}{" "}
+                      {c}{" "}
                       <span className="text-gray-400 transition-colors group-hover:text-white">
-                        (
-                        {
-                          pages.data?.filter((p) => p.category === c.name)
-                            .length
-                        }
-                        )
+                        ({pages.data?.filter((p) => p?.category === c).length})
                       </span>
                     </button>
                   ))}
@@ -78,13 +84,24 @@ export default function Home() {
                     onChange={(e) => setSelectedCategory(e.target.value)}
                   >
                     {categories.map((c) => (
-                      <option key={c.name} value={c.name}>
-                        {c.name}
+                      <option key={c} value={c}>
+                        {c}
                       </option>
                     ))}
                   </select>
                 </div>
-                <Search search={search} setSearch={setSearch} />
+                <button
+                  onClick={() => setShowForm(!showForm)}
+                  type="button"
+                  className={clsx(
+                    showForm
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                      : "border-indigo-700 bg-white text-indigo-700",
+                    "inline-flex items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium shadow-sm  transition-colors  focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                  )}
+                >
+                  {showForm ? "Lukk skjema" : "Mål din side"}
+                </button>
               </div>
             </section>
           </div>
@@ -98,8 +115,16 @@ export default function Home() {
                 </h2>
                 <div className="relative overflow-hidden rounded-lg bg-white shadow">
                   <div className="p-6">
+                    {addedSite && (
+                      <div className="flex">
+                        <div className="">{addedSite.url}</div>
+                      </div>
+                    )}
                     <Table
+                      categories={categories}
                       search={search}
+                      setSearch={setSearch}
+                      showForm={showForm}
                       addNew={(url, category) => createNewEntry(url, category)}
                       pages={pages.data}
                       category={selectedCategory}

@@ -14,49 +14,92 @@ export const entryRouter = router({
     .input(
       z.object({
         url: z.string(),
-        category: z.enum(["Netthandel", "Nettavis", "Hjemmeside"]),
+        category: z.enum([
+          "Netthandel",
+          "Nettavis",
+          "Resturanter",
+          "Byrå",
+          "Hjemmeside",
+        ]),
       })
     )
-    .mutation(async ({ ctx, input: { url, category } }) => {
-      const data = await (
+    .mutation(async ({ ctx, input: { url } }) => {
+      const mobileData = await (
         await fetch(
           `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&category=performance&strategy=mobile&key=${process.env.PAGESPEED_API_KEY}`
         )
       ).json();
+      const desktopData = await (
+        await fetch(
+          `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&category=performance&strategy=desktop&key=${process.env.PAGESPEED_API_KEY}`
+        )
+      ).json();
 
-      if (data.error) {
-        console.log(data.error);
+      if (mobileData.error) {
+        console.log(mobileData.error);
+
+        throw new TRPCClientError("Something went wrong");
+      }
+
+      if (desktopData.error) {
+        console.log(desktopData.error);
 
         throw new TRPCClientError("Something went wrong");
       }
 
       if (
-        data.lighthouseResult.categories["performance"].score &&
-        data.lighthouseResult.audits.metrics.details.items[0]
+        mobileData.lighthouseResult.categories["performance"].score &&
+        mobileData.lighthouseResult.audits.metrics.details.items[0] &&
+        desktopData.lighthouseResult.categories["performance"].score &&
+        desktopData.lighthouseResult.audits.metrics.details.items[0]
       ) {
-        const metrics = data.lighthouseResult.audits.metrics.details.items[0];
+        const mobileMetrics =
+          mobileData.lighthouseResult.audits.metrics.details.items[0];
+        const desktopMetrics =
+          desktopData.lighthouseResult.audits.metrics.details.items[0];
 
-        const entry: Omit<Omit<Prisma.EntryCreateInput, "page">, "score"> = {
-          fid: metrics["maxPotentialFID"],
-          cls: metrics["cumulativeLayoutShift"],
-          fcp: metrics["firstContentfulPaint"],
-          lcp: metrics["largestContentfulPaint"],
-          ttfb: metrics["firstMeaningfulPaint"],
-          speed: metrics["speedIndex"],
+        const entry: Omit<
+          Omit<Omit<Prisma.EntryCreateInput, "page">, "score">,
+          "desktopScore"
+        > = {
+          fid: mobileMetrics["maxPotentialFID"],
+          cls: mobileMetrics["cumulativeLayoutShift"],
+          fcp: mobileMetrics["firstContentfulPaint"],
+          lcp: mobileMetrics["largestContentfulPaint"],
+          ttfb: mobileMetrics["firstMeaningfulPaint"],
+          speed: mobileMetrics["speedIndex"],
+          desktopSpeed: desktopMetrics["speedIndex"],
+          desktopFid: desktopMetrics["maxPotentialFID"],
+          desktopCls: desktopMetrics["cumulativeLayoutShift"],
+          desktopFcp: desktopMetrics["firstContentfulPaint"],
+          desktopLcp: desktopMetrics["largestContentfulPaint"],
+          desktopTtfb: desktopMetrics["firstMeaningfulPaint"],
         };
 
         const score =
-          data.lighthouseResult.categories["performance"].score * 100;
+          mobileData.lighthouseResult.categories["performance"].score * 100;
+        const desktopScore =
+          desktopData.lighthouseResult.categories["performance"].score * 100;
 
         const page = await ctx.prisma.page.upsert({
           where: { url },
+          select: {
+            id: true,
+            url: true,
+            category: true,
+            score: true,
+            updatedAt: true,
+            createdAt: true,
+            history: true,
+          },
           create: {
             score,
             url,
-            category,
+            category: "",
             history: {
               create: {
                 score,
+                desktopScore,
                 ...entry,
               },
             },
@@ -65,20 +108,12 @@ export const entryRouter = router({
             history: {
               create: {
                 score,
+                desktopScore,
                 ...entry,
               },
             },
           },
         });
-
-        if (page && page.score < score) {
-          await ctx.prisma.page.update({
-            where: { url },
-            data: {
-              score,
-            },
-          });
-        }
 
         return page;
       }

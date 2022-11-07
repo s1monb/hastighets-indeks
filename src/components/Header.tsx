@@ -1,6 +1,6 @@
 export default function Header() {
   return (
-    <header className="bg-indigo-600 pt-12 pb-24 md:pt-24 md:pb-48">
+    <header className="bg-indigo-600 pt-12 pb-24">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:max-w-7xl lg:px-8">
         <div className="py-5">
           <div className="relative items-center gap-8 md:grid md:grid-cols-3">
