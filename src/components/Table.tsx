@@ -364,7 +364,8 @@ export default function Table({
                       >
                         <span className="font-bold">Score:</span>{" "}
                         <p className="mt-4 font-light text-gray-600">
-                          Vi henter score fra Google's lighthouse, og gir en
+                          Vi henter score fra Google&apos;s lighthouse, og gir
+                          en
                           <br />
                           gjennomsnittsscore basert på mobil og desktop
                         </p>

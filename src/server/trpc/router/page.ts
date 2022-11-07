@@ -9,14 +9,13 @@ export const pageRouter = router({
     });
 
     const splitByCategory = pages.reduce((acc, page) => {
-      const category = page.category || "uncategorized";
+      const category = page.category;
       if (!acc[category]) {
         acc[category] = [];
       }
 
-      if (acc[category]) {
-        // @ts-ignore
-        acc[category].push(page);
+      if (pages.map((p) => p.category).includes(category)) {
+        acc[category]?.push(page);
       }
 
       return acc;
